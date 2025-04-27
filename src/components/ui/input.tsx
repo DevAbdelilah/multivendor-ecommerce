@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 function Input({ className, type, ...props }: React.ComponentProps<"input">) {
   return (
     <input
+      suppressHydrationWarning // Add this
       type={type}
       data-slot="input"
       className={cn(
