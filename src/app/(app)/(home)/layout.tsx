@@ -1,10 +1,10 @@
 import configPromise from "@payload-config";
 import { getPayload } from "payload";
-
 import { Footer } from "./footer";
 import Navbar from "./navbar";
 import { SearfcheFilters } from "./searche-filters";
 import { Category } from "@/payload-types";
+import { CustomCategory } from "./types";
 
 interface Props {
   children: React.ReactNode;
@@ -15,7 +15,8 @@ const Layout = async ({ children }: Props) => {
     config: configPromise,
   });
 
-  const data = await payload.find({
+  // First get all parent categories sorted by name
+  const allCategories = await payload.find({
     collection: "categories",
     depth: 1,
     pagination: false,
@@ -24,9 +25,21 @@ const Layout = async ({ children }: Props) => {
         exists: false,
       },
     },
+    sort: "name",
   });
 
-  const formattedData = data.docs.map((doc) => ({
+  // Separate the "all" category from others
+  const allCategory = allCategories.docs.find((doc) => doc.slug === "all");
+  const otherCategories = allCategories.docs.filter(
+    (doc) => doc.slug !== "all"
+  );
+
+  // Combine them with "all" first, then others in alphabetical order
+  const sortedData = allCategory
+    ? [allCategory, ...otherCategories]
+    : [...otherCategories];
+
+  const formattedData: CustomCategory[] = sortedData.map((doc) => ({
     ...doc,
     subcategories: (doc.subcategories?.docs ?? []).map((doc) => ({
       ...(doc as Category),
@@ -34,7 +47,6 @@ const Layout = async ({ children }: Props) => {
     })),
   }));
 
-  console.log(data, formattedData);
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
